@@ -9,7 +9,7 @@ image = mpimg.imread('test.jpg')
 # Grab the x and y size and make a copy of the image
 ysize = image.shape[0]
 xsize = image.shape[1]
-color_select = np.copy(image)
+img_copy = np.copy(image)
 
 # Define color selection criteria
 ###### MODIFY THESE VARIABLES TO MAKE YOUR COLOR SELECTION
@@ -26,11 +26,11 @@ thresholds = (image[:,:,0] < rgb_threshold[0]) \
             | (image[:,:,1] < rgb_threshold[1]) \
             | (image[:,:,2] < rgb_threshold[2])
 
-color_select[thresholds] = [0,0,0]
-plt.imshow(color_select)
+img_copy[thresholds] = [0, 0, 0]
+plt.imshow(img_copy)
 
 # Display the image
-plt.imshow(color_select)
+plt.imshow(img_copy)
 
 # Uncomment the following code if you are running the code locally and wish to save the image
-mpimg.imsave("test-after.jpg", color_select)
+mpimg.imsave("test-after.jpg", img_copy)
