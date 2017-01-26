@@ -34,29 +34,7 @@
 #  </figcaption>
 # </figure>
 
-# In[1]:
-
-**Run the cell below to import some packages.  If you get an `import error` for a package you've already installed, try changing your kernel (select the Kernel menu above --> Change Kernel).  Still have problems?  Try relaunching Jupyter Notebook from the terminal prompt.  Also, see [this forum post](https://carnd-forums.udacity.com/cq/viewquestion.action?spaceKey=CAR&id=29496372&questionTitle=finding-lanes---import-cv2-fails-even-though-python-in-the-terminal-window-has-no-problem-with-import-cv2) for more troubleshooting tips.**
-
-
-# In[2]:
-
-#importing some useful packages
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-import numpy as np
-import cv2
-get_ipython().magic('matplotlib inline')
-
-
-# In[3]:
-
-#reading in an image
-image = mpimg.imread('test_images/solidWhiteRight.jpg')
-#printing out some stats and plotting
-print('This image is:', type(image), 'with dimesions:', image.shape)
-plt.imshow(image)  # if you wanted to show a single color channel image called 'gray', for example, call as plt.imshow(gray, cmap='gray')
-
+# **Run the cell below to import some packages.  If you get an `import error` for a package you've already installed, try changing your kernel (select the Kernel menu above --> Change Kernel).  Still have problems?  Try relaunching Jupyter Notebook from the terminal prompt.  Also, see [this forum post](https://carnd-forums.udacity.com/cq/viewquestion.action?spaceKey=CAR&id=29496372&questionTitle=finding-lanes---import-cv2-fails-even-though-python-in-the-terminal-window-has-no-problem-with-import-cv2) for more troubleshooting tips.**
 
 # **Some OpenCV functions (beyond those introduced in the lesson) that might be useful for this project are:**
 # 
@@ -72,9 +50,18 @@ plt.imshow(image)  # if you wanted to show a single color channel image called '
 
 # Below are some helper functions to help get you started. They should look familiar from the lesson!
 
-# In[4]:
+# In[1]:
 
+#importing some useful packages
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+import numpy as np
+import cv2
+get_ipython().magic('matplotlib inline')
 import math
+
+
+# In[2]:
 
 def grayscale(img):
     """Applies the Grayscale transform
@@ -173,7 +160,7 @@ def weighted_img(img, initial_img, α=0.8, β=1., λ=0.):
 # Now you should build your pipeline to work on the images in the directory "test_images"  
 # **You should make sure your pipeline works well on these images before you try the videos.**
 
-# In[5]:
+# In[3]:
 
 import os
 os.listdir("test_images/")
@@ -181,7 +168,7 @@ os.listdir("test_images/")
 
 # run your solution on all test_images and make copies into the test_images directory).
 
-# In[6]:
+# In[21]:
 
 # TODO: Build your pipeline that will draw lane lines on the test_images
 # then save them to the test_images directory.
@@ -198,15 +185,16 @@ ysize = image.shape[0]
 xsize = image.shape[1]
 color_select= np.copy(image)
 gray = grayscale(color_select)
-plt.imshow(gray, cmap='gray')
+#plt.imshow(gray, cmap='gray')
 
 
-# In[7]:
+# In[22]:
 
 # Define a kernel size and apply Gaussian smoothing
 # before running Canny, which suppresses noise and spurious gradients by averaging
 kernel_size = 5
 blur_gray = gaussian_blur(gray, kernel_size)
+plt.imshow(blur_gray, cmap='gray') 
 
 # Define our parameters for Canny and apply
 low_threshold = 40
@@ -224,7 +212,7 @@ masked_edges = region_of_interest(edges, vertices)
 #plt.imshow(masked_edges, cmap='Greys_r')
 
 
-# In[8]:
+# In[23]:
 
 # Define the Hough transform parameters
 # Make a blank the same size as our image to draw on
@@ -238,15 +226,16 @@ lines_image = hough_lines(masked_edges, rho, theta, threshold, min_line_len, max
 #plt.imshow(lines_image)
 
 
-# In[9]:
+# In[24]:
 
 # Python 3 has support for cool math symbols.
 #def weighted_img(img, initial_img, α=0.8, β=1., λ=0.)
-orig_image = np.copy(image)*0 #creating a blank to draw lines on
+orig_image = np.copy(image) #creating a blank to draw lines on
 
 # Draw the lines on the edge image
-line_edges = weighted_img(lines_image, image)
+line_edges = weighted_img(lines_image, orig_image)
 plt.imshow(line_edges)
+cv2.imwrite("test_images/solidWhiteRight_soln.jpg",line_edges)
 
 
 # ## Test on Videos
@@ -269,36 +258,39 @@ plt.imshow(line_edges)
 # ```
 # **Follow the instructions in the error message and check out [this forum post](https://carnd-forums.udacity.com/display/CAR/questions/26218840/import-videofileclip-error) for more troubleshooting tips across operating systems.**
 
-# In[11]:
+# In[25]:
 
 # Import everything needed to edit/save/watch video clips
 from moviepy.editor import VideoFileClip
 from IPython.display import HTML
 
 
-# In[12]:
+# In[29]:
 
 def process_image(image):
     # NOTE: The output you return should be a color image (3 channel) for processing video below
     # TODO: put your pipeline here,
     # you should return the final output (image with lines are drawn on lanes)
-
-    return result
+    return line_edges
 
 
 # Let's try the one with the solid white lane on the right first ...
 
-# In[13]:
+# In[33]:
 
 white_output = 'white.mp4'
 clip1 = VideoFileClip("solidWhiteRight.mp4")
-white_clip = clip1.fl_image(process_image) #NOTE: this function expects color images!!
+
+
+# In[31]:
+
+white_clip = clip1.fl_image(line_edges) #NOTE: this function expects color images!!
 get_ipython().magic('time white_clip.write_videofile(white_output, audio=False)')
 
 
 # Play the video inline, or if you prefer find the video in your filesystem (should be in the same directory) and play it in your video player of choice.
 
-# In[ ]:
+# In[50]:
 
 HTML("""
 <video width="960" height="540" controls>
