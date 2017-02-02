@@ -57,8 +57,9 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import numpy as np
 import cv2
-get_ipython().magic('matplotlib inline')
+import collections
 import math
+get_ipython().magic('matplotlib inline')
 
 
 # In[2]:
@@ -135,7 +136,8 @@ def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap):
     """
     lines = cv2.HoughLinesP(img, rho, theta, threshold, np.array([]), minLineLength=min_line_len, maxLineGap=max_line_gap)
     line_img = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
-    draw_lines(line_img, lines)
+    #draw_lines(line_img, lines)
+    draw_avg_ext_lines(line_img, lines)
     return line_img
 
 # Python 3 has support for cool math symbols.
@@ -155,87 +157,174 @@ def weighted_img(img, initial_img, α=0.8, β=1., λ=0.):
     return cv2.addWeighted(initial_img, α, img, β, λ)
 
 
+# In[3]:
+
+# NOTE: I did not write this function (draw_avg_ext_lines).  
+# I copied it pretty much verbatim from the author below in order to submit this project on time.
+# However, I am reviewing it to get a better understanding of the processing.
+#
+# Author: Juan Marcos Ottonello
+# Site: http://ottonello.gitlab.io/selfdriving/nanodegree/lane/lines/2016/12/15/lane-lines-submitted.html
+#
+
+debug=False
+# We'll average information between frames
+prev_lines = collections.deque([], 5)
+
+def reset_prev_lines():
+    prev_lines.clear()
+    
+def draw_avg_ext_lines(img, lines, color=[255, 0, 0], thickness=10):
+    """
+    Here I'm applying a couple of the suggested techniques, first I split the lines into
+    left and right according to their slopes, then and to iterate only once, I take a moving
+    average of the slopes and discard the lines with a slope outside of the average.
+    I tried both including all lines into the average and only the ones passing the slope
+    average test, and including everything seems to work better.
+    """
+    debug=False
+    lSlopeAvg=0
+    rSlopeAvg=0
+    slope_tolerance=.1
+    slope_tolerance_from_zero=.5
+    bottom_y = img.shape[0]
+    top_y = int(bottom_y /1.6)
+    
+    lLines = []
+    rLines = []
+    l = 1
+    r = 1
+    
+    for line in lines:
+        for x1,y1,x2,y2 in line:
+            slope = (y2-y1)/(x2-x1)
+            if np.absolute(slope) == np.inf or np.absolute(slope) < slope_tolerance_from_zero:
+                continue
+            if debug:
+                cv2.line(img, (x1, y1), (x2, y2), color, thickness)
+            if slope < 0:
+                lSlopeAvg = lSlopeAvg + (slope - lSlopeAvg) / l
+                l += 1
+                if np.absolute(lSlopeAvg - slope) < slope_tolerance :
+                    lLines.append((x1,y1))
+                    lLines.append((x2,y2))
+            else:
+                rSlopeAvg = rSlopeAvg + (slope - rSlopeAvg) / r
+                r += 1
+                if np.absolute(rSlopeAvg - slope) < slope_tolerance :
+                    rLines.append((x1,y1))
+                    rLines.append((x2,y2))               
+    
+    """
+    After having split the lines, I use cv2.fitline to fit the sets of points to a single line.
+    cv2.fitline gives back a unit vector and a point in the line, both of which we can use
+    to calculate the slope and intercept of the line function.
+    """
+    if len(lLines) > 0 and len(rLines) > 0  :
+        [left_vx,left_vy,left_x,left_y] = cv2.fitLine(np.array(lLines, dtype=np.int32), cv2.DIST_L2,0,0.01,0.01)      
+        left_slope = left_vy / left_vx
+        left_b = left_y - (left_slope*left_x)
+
+        [right_vx,right_vy,right_x,right_y] = cv2.fitLine(np.array(rLines, dtype=np.int32), cv2.DIST_L2,0,0.01,0.01)    
+        right_slope = right_vy / right_vx
+        right_b = right_y - (right_slope*right_x)
+
+        # Average this line with previous frames       
+        prev_lines.append((left_b, left_slope, right_b, right_slope))
+    
+    if len(prev_lines) > 0: 
+        avg = np.sum(prev_lines, -3) /len(prev_lines)
+        left_b = avg[0]
+        left_slope = avg[1]
+        right_b = avg[2]
+        right_slope = avg[3]
+
+        """
+        Having the slope and intercept enables us to calculate the x coordinates of our desired
+        start and end points at the top and the bottom of the road.
+        """
+        ltop_x = (top_y - left_b) / left_slope
+        lbottom_x = (bottom_y - left_b) / left_slope
+
+        rtop_x = (top_y - right_b) / right_slope
+        rbottom_x = (bottom_y - right_b) / right_slope
+
+        cv2.line(img, (lbottom_x, bottom_y), (ltop_x, top_y), color, thickness)
+        cv2.line(img, (rbottom_x, bottom_y), (rtop_x, top_y), color, thickness)
+        
+
+
 # ## Test on Images
 # 
 # Now you should build your pipeline to work on the images in the directory "test_images"  
 # **You should make sure your pipeline works well on these images before you try the videos.**
 
-# In[3]:
-
-import os
-os.listdir("test_images/")
-
-
 # run your solution on all test_images and make copies into the test_images directory).
 
-# In[21]:
+# In[4]:
+
+import os
 
 # TODO: Build your pipeline that will draw lane lines on the test_images
 # then save them to the test_images directory.
 #reading in an image
-image = mpimg.imread('test_images/solidWhiteRight.jpg')
-#printing out some stats and plotting
-print('This image is:', type(image), 'with dimesions:', image.shape)
 
-# Grab the x and y sizes and make two copies of the image
-# With one copy we'll extract only the pixels that meet our selection,
-# then we'll paint those pixels red in the original image to see our selection
-# overlaid on the original.
-ysize = image.shape[0]
-xsize = image.shape[1]
-color_select= np.copy(image)
-gray = grayscale(color_select)
-#plt.imshow(gray, cmap='gray')
+def lane_lines(image):
+    color_select= np.copy(image)
+    gray = grayscale(color_select)
+    #plt.imshow(gray, cmap='gray')
 
+    # Define a kernel size and apply Gaussian smoothing
+    # before running Canny, which suppresses noise and spurious gradients by averaging
+    kernel_size = 5
+    blur_gray = gaussian_blur(gray, kernel_size)
+    #plt.imshow(blur_gray, cmap='gray') 
 
-# In[22]:
+    # Define our parameters for Canny and apply
+    low_threshold = 50
+    high_threshold = 150
+    edges = canny(blur_gray, low_threshold, high_threshold)
 
-# Define a kernel size and apply Gaussian smoothing
-# before running Canny, which suppresses noise and spurious gradients by averaging
-kernel_size = 5
-blur_gray = gaussian_blur(gray, kernel_size)
-plt.imshow(blur_gray, cmap='gray') 
+    # This time we are defining a four sided polygon to mask
+    imshape = image.shape
+    vertices = np.array([[(0,imshape[0]),(390,340), (510, 330), (imshape[1],imshape[0])]], dtype=np.int32)
 
-# Define our parameters for Canny and apply
-low_threshold = 40
-high_threshold = 120
-edges = cv2.Canny(blur_gray, low_threshold, high_threshold)
+    # Define a mask region
+    masked_edges = region_of_interest(edges, vertices)
+ 
+    # Define the Hough transform parameters
+    # Make a blank the same size as our image to draw on
+    rho = 1
+    theta = np.pi/180
+    threshold = 30
+    min_line_len = 60
+    max_line_gap = 70
 
-# This time we are defining a four sided polygon to mask
-imshape = image.shape
-#vertices = np.array([[(0,imshape[0]),(0, 0), (imshape[1], 0), (imshape[1],imshape[0])]], dtype=np.int32)
-#vertices = np.array([[(0,imshape[0]),(450, 290), (490, 290), (imshape[1],imshape[0])]], dtype=np.int32)
-vertices = np.array([[(0,imshape[0]),(390,340), (510, 330), (imshape[1],imshape[0])]], dtype=np.int32)
-
-# Define a mask region
-masked_edges = region_of_interest(edges, vertices)
-#plt.imshow(masked_edges, cmap='Greys_r')
+    return hough_lines(masked_edges, rho, theta, threshold, min_line_len, max_line_gap)
 
 
-# In[23]:
-
-# Define the Hough transform parameters
-# Make a blank the same size as our image to draw on
-rho = 1
-theta = np.pi/180
-threshold = 70
-min_line_len = 5
-max_line_gap = 35
-
-lines_image = hough_lines(masked_edges, rho, theta, threshold, min_line_len, max_line_gap)
-#plt.imshow(lines_image)
+# In[5]:
 
 
-# In[24]:
+# Test on the static images 
+in_path = 'test_images/'
+out_path = 'test_soln/'
+test_images = os.listdir(in_path) 
 
-# Python 3 has support for cool math symbols.
-#def weighted_img(img, initial_img, α=0.8, β=1., λ=0.)
-orig_image = np.copy(image) #creating a blank to draw lines on
-
-# Draw the lines on the edge image
-line_edges = weighted_img(lines_image, orig_image)
-plt.imshow(line_edges)
-cv2.imwrite("test_images/solidWhiteRight_soln.jpg",line_edges)
+for img in test_images:
+    filename, ext = os.path.splitext(img)
+    if ext != ".jpg":
+        continue
+           
+    test_image = mpimg.imread(in_path + img)
+    lines_image = lane_lines(test_image)
+   
+    # Draw the lines on the edge image
+    combo_image = weighted_img(lines_image, test_image) 
+    fig = plt.figure()
+    fig.suptitle(img)
+    plt.imshow(combo_image)
+    mpimg.imsave(out_path + img, combo_image, cmap='Greys_r')
 
 
 # ## Test on Videos
@@ -258,39 +347,35 @@ cv2.imwrite("test_images/solidWhiteRight_soln.jpg",line_edges)
 # ```
 # **Follow the instructions in the error message and check out [this forum post](https://carnd-forums.udacity.com/display/CAR/questions/26218840/import-videofileclip-error) for more troubleshooting tips across operating systems.**
 
-# In[25]:
+# In[6]:
 
 # Import everything needed to edit/save/watch video clips
 from moviepy.editor import VideoFileClip
 from IPython.display import HTML
 
-
-# In[29]:
-
 def process_image(image):
     # NOTE: The output you return should be a color image (3 channel) for processing video below
     # TODO: put your pipeline here,
     # you should return the final output (image with lines are drawn on lanes)
-    return line_edges
+    # Draw the lines on the edge image
+    lines_image = lane_lines(image)
+    return weighted_img(lines_image, image)
 
 
 # Let's try the one with the solid white lane on the right first ...
 
-# In[33]:
+# In[7]:
 
 white_output = 'white.mp4'
-clip1 = VideoFileClip("solidWhiteRight.mp4")
+clip1 = VideoFileClip("solidWhiteRight.mp4", audio=False)
 
-
-# In[31]:
-
-white_clip = clip1.fl_image(line_edges) #NOTE: this function expects color images!!
+white_clip = clip1.fl_image(process_image) #NOTE: this function expects color images!!
 get_ipython().magic('time white_clip.write_videofile(white_output, audio=False)')
 
 
 # Play the video inline, or if you prefer find the video in your filesystem (should be in the same directory) and play it in your video player of choice.
 
-# In[50]:
+# In[8]:
 
 HTML("""
 <video width="960" height="540" controls>
@@ -303,7 +388,7 @@ HTML("""
 
 # Now for the one with the solid yellow lane on the left. This one's more tricky!
 
-# In[ ]:
+# In[9]:
 
 yellow_output = 'yellow.mp4'
 clip2 = VideoFileClip('solidYellowLeft.mp4')
@@ -311,7 +396,7 @@ yellow_clip = clip2.fl_image(process_image)
 get_ipython().magic('time yellow_clip.write_videofile(yellow_output, audio=False)')
 
 
-# In[ ]:
+# In[10]:
 
 HTML("""
 <video width="960" height="540" controls>
@@ -336,7 +421,7 @@ HTML("""
 # 
 # Try your lane finding pipeline on the video below.  Does it still work?  Can you figure out a way to make it more robust?  If you're up for the challenge, modify your pipeline so it works with this video and submit it along with the rest of your project!
 
-# In[ ]:
+# In[11]:
 
 challenge_output = 'extra.mp4'
 clip2 = VideoFileClip('challenge.mp4')
@@ -344,11 +429,16 @@ challenge_clip = clip2.fl_image(process_image)
 get_ipython().magic('time challenge_clip.write_videofile(challenge_output, audio=False)')
 
 
-# In[ ]:
+# In[12]:
 
 HTML("""
 <video width="960" height="540" controls>
   <source src="{0}">
 </video>
 """.format(challenge_output))
+
+
+# In[ ]:
+
+
 
