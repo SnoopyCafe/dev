@@ -3,11 +3,15 @@ You need to change the Add() class below.
 """
 
 class Node(object):
-    def __init__(self, inbound_nodes=[]):
+    def __init__(self, inbound_nodes=[],op=""):
         # Nodes from which this Node receives values
         self.inbound_nodes = inbound_nodes
         # Nodes to which this Node passes values
         self.outbound_nodes = []
+
+        # Type of operation , e.g., +,-,*, /
+        self.operation = op
+
         # A calculated value
         self.value = None
         # Add this node as an outbound node on its inputs.
@@ -44,33 +48,11 @@ class Input(Node):
         if value is not None:
             self.value = value
 
-
-# class Add(Node):
-#     def __init__(self, x, y, z):
-#         # You could access `x` and `y` in forward with
-#         # self.inbound_nodes[0] (`x`) and self.inbound_nodes[1] (`y`)
-#         Node.__init__(self, [x, y, z])
-#
-#     def forward(self):
-#         """
-#         Set the value of this node (`self.value`) to the sum of it's inbound_nodes.
-#
-#         Your code here!
-#         """
-#
-#         # Modify to add n number of inputs
-#         total = 0
-#         for inp in self.inbound_nodes:
-#             total += inp.value
-#
-#         #self.value = self.inbound_nodes[0].value + self.inbound_nodes[1].value
-#         self.value = total
-
 class Add(Node):
-    def __init__(self, *args):
+    def __init__(self, *args, op):
         # You could access `x` and `y` in forward with
         # self.inbound_nodes[0] (`x`) and self.inbound_nodes[1] (`y`)
-        Node.__init__(self, *args)
+        Node.__init__(self, *args, op)
 
     def forward(self):
         """
@@ -88,10 +70,10 @@ class Add(Node):
         self.value = total
 
 class Mult(Node):
-    def __init__(self, *args):
+    def __init__(self, *args, op):
         # You could access `x` and `y` in forward with
         # self.inbound_nodes[0] (`x`) and self.inbound_nodes[1] (`y`)
-        Node.__init__(self, *args)
+        Node.__init__(self, *args, op)
 
     def forward(self):
         """
