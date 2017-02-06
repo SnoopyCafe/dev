@@ -45,11 +45,32 @@ class Input(Node):
             self.value = value
 
 
+# class Add(Node):
+#     def __init__(self, x, y, z):
+#         # You could access `x` and `y` in forward with
+#         # self.inbound_nodes[0] (`x`) and self.inbound_nodes[1] (`y`)
+#         Node.__init__(self, [x, y, z])
+#
+#     def forward(self):
+#         """
+#         Set the value of this node (`self.value`) to the sum of it's inbound_nodes.
+#
+#         Your code here!
+#         """
+#
+#         # Modify to add n number of inputs
+#         total = 0
+#         for inp in self.inbound_nodes:
+#             total += inp.value
+#
+#         #self.value = self.inbound_nodes[0].value + self.inbound_nodes[1].value
+#         self.value = total
+
 class Add(Node):
-    def __init__(self, x, y, z):
+    def __init__(self, *args):
         # You could access `x` and `y` in forward with
         # self.inbound_nodes[0] (`x`) and self.inbound_nodes[1] (`y`)
-        Node.__init__(self, [x, y, z])
+        Node.__init__(self, *args)
 
     def forward(self):
         """
@@ -66,6 +87,26 @@ class Add(Node):
         #self.value = self.inbound_nodes[0].value + self.inbound_nodes[1].value
         self.value = total
 
+class Mult(Node):
+    def __init__(self, *args):
+        # You could access `x` and `y` in forward with
+        # self.inbound_nodes[0] (`x`) and self.inbound_nodes[1] (`y`)
+        Node.__init__(self, *args)
+
+    def forward(self):
+        """
+        Set the value of this node (`self.value`) to the sum of it's inbound_nodes.
+
+        Your code here!
+        """
+
+        # Modify to add n number of inputs
+        total = 1
+        for inp in self.inbound_nodes:
+            total *= inp.value
+
+        #self.value = self.inbound_nodes[0].value + self.inbound_nodes[1].value
+        self.value = total
 """
 No need to change anything below here!
 """
