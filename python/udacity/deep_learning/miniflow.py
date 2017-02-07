@@ -3,7 +3,7 @@ You need to change the Add() class below.
 """
 
 class Node(object):
-    def __init__(self, inbound_nodes=[],op=""):
+    def __init__(self, inbound_nodes=[], op=None):
         # Nodes from which this Node receives values
         self.inbound_nodes = inbound_nodes
         # Nodes to which this Node passes values
@@ -49,10 +49,10 @@ class Input(Node):
             self.value = value
 
 class Add(Node):
-    def __init__(self, *args, op):
+    def __init__(self, *args):
         # You could access `x` and `y` in forward with
         # self.inbound_nodes[0] (`x`) and self.inbound_nodes[1] (`y`)
-        Node.__init__(self, *args, op)
+        Node.__init__(self, *args, op="+")
 
     def forward(self):
         """
@@ -70,10 +70,31 @@ class Add(Node):
         self.value = total
 
 class Mult(Node):
-    def __init__(self, *args, op):
+    def __init__(self, *args):
         # You could access `x` and `y` in forward with
         # self.inbound_nodes[0] (`x`) and self.inbound_nodes[1] (`y`)
-        Node.__init__(self, *args, op)
+        Node.__init__(self, *args, op="*")
+
+    def forward(self):
+        """
+        Set the value of this node (`self.value`) to the sum of it's inbound_nodes.
+
+        Your code here!
+        """
+
+        # Modify to multiply n number of inputs
+        total = 1
+        for inp in self.inbound_nodes:
+            total *= inp.value
+
+        #self.value = self.inbound_nodes[0].value + self.inbound_nodes[1].value
+        self.value = total
+
+class Linear(Node):
+    def __init__(self, *args):
+        # You could access `x` and `y` in forward with
+        # self.inbound_nodes[0] (`x`) and self.inbound_nodes[1] (`y`)
+        Node.__init__(self, *args, op="")
 
     def forward(self):
         """
@@ -83,12 +104,25 @@ class Mult(Node):
         """
 
         # Modify to add n number of inputs
-        total = 1
-        for inp in self.inbound_nodes:
-            total *= inp.value
+        inps = self.inbound_nodes[0]
+        weights = self.inbound_nodes[1]
+
+        total = 0
+        for inp in inps.value:
+            for weight in weights.value:
+                total += inp * weight
+
+        print (total)
+
+
+        #for weight in weights.value:
+        #    print(weight)
+        # SUM (Inps * Weights)
+        #for inp in self.inbound_nodes:
+        #    total *= inp.value
 
         #self.value = self.inbound_nodes[0].value + self.inbound_nodes[1].value
-        self.value = total
+        self.value = None
 """
 No need to change anything below here!
 """
