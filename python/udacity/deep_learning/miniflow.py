@@ -118,22 +118,20 @@ class Linear(Node):
 
 class Sigmoid(Node):
     def __init__(self, node):
-        # You could access `x` and `y` in forward with
-        # self.inbound_nodes[0] (`x`) and self.inbound_nodes[1] (`y`)
         Node.__init__(self, [node])
 
+    def _sigmoid(self, x):
+        """
+        This method is separate from `forward` because it
+        will be used with `backward` as well.
+
+        `x`: A numpy array-like object.
+        """
+        return 1. / (1. + np.exp(-x)) # the `.` ensures that `1` is a float
+
     def forward(self):
-        """
-        Set the value of this node (`self.value`) to the sum of it's inbound_nodes.
-
-        Your code here!
-        """
-
-        # Modify to add n number of inputs
-        X = self.inbound_nodes[0].value
-
-        # Compute dot product
-        self.value = 1 / (1+np.exp(-X))
+        input_value = self.inbound_nodes[0].value
+        self.value = self._sigmoid(input_value)
 
 def topological_sort(feed_dict):
     """
