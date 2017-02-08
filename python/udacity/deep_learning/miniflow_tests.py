@@ -26,7 +26,7 @@ class BasicTest(unittest.TestCase):
 
     def test_linear(self):
         inputs, weights, bias = Input(), Input(), Input()
-        f = Linear([inputs,weights, bias])
+        f = Linear(inputs,weights, bias)
 
         feed_dict = {
                  inputs: [6, 14, 3],
@@ -36,7 +36,33 @@ class BasicTest(unittest.TestCase):
 
         self.assertEqual(compute(f, feed_dict), 12.7)
 
+    def test_linear_array(self):
+        X, W, b = Input(), Input(), Input()
+        f = Linear(X, W, b)
 
+        X_ = np.array([[-1., -2.], [-1, -2]])
+        W_ = np.array([[2., -3], [2., -3]])
+        b_ = np.array([-3., -5])
+
+        feed_dict = {X: X_, W: W_, b: b_}
+        test = np.array([[-9.,4.],[-9,4.]]).all()
+        answer = np.array(compute(f, feed_dict)).all()
+        self.assertEqual(test, answer)
+
+    def test_sigmoid(self):
+        X, W, b = Input(), Input(), Input()
+
+        f = Linear(X, W, b)
+        g = Sigmoid(f)
+
+        X_ = np.array([[-1., -2.], [-1, -2]])
+        W_ = np.array([[2., -3], [2., -3]])
+        b_ = np.array([-3., -5])
+
+        feed_dict = {X: X_, W: W_, b: b_}
+
+        answer = np.array(compute(g, feed_dict)).all()
+        self.assertEqual(True, answer)
 
 def compute(node, feed):
         # NOTE: because topological_sort set the values for the `Input` nodes we could also access

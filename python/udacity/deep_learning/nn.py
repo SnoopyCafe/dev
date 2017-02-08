@@ -40,7 +40,8 @@ compute(Mult([x, y, z]), feed_dict)
 # }
 
 X, W, b = Input(), Input(), Input()
-f = Linear([X, W, b])
+f = Linear(X, W, b)
+g = Sigmoid(f)
 
 X_ = np.array([[-1., -2.], [-1, -2]])
 W_ = np.array([[2., -3], [2., -3]])
@@ -48,7 +49,7 @@ b_ = np.array([-3., -5])
 
 feed_dict = {X: X_, W: W_, b: b_}
 
-compute(f, feed_dict)
+compute(g, feed_dict)
 
 #print("{} + {} = {} (according to miniflow)".format(feed_dict[x], feed_dict[y], output))
 

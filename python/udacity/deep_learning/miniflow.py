@@ -95,10 +95,10 @@ class Mult(Node):
         self.value = total
 
 class Linear(Node):
-    def __init__(self, *args):
+    def __init__(self, X, W, b):
         # You could access `x` and `y` in forward with
         # self.inbound_nodes[0] (`x`) and self.inbound_nodes[1] (`y`)
-        Node.__init__(self, *args)
+        Node.__init__(self, [X, W, b])
 
     def forward(self):
         """
@@ -108,17 +108,32 @@ class Linear(Node):
         """
 
         # Modify to add n number of inputs
-        inps = self.inbound_nodes[0]
-        weights = self.inbound_nodes[1]
-        base = self.inbound_nodes[2]
+        X = self.inbound_nodes[0].value
+        W = self.inbound_nodes[1].value
+        b = self.inbound_nodes[2].value
 
         # Compute dot product
-        self.value = np.dot(inps.value,weights.value) + base.value
+        self.value = np.dot(X, W) + b
 
-"""
-No need to change anything below here!
-"""
 
+class Sigmoid(Node):
+    def __init__(self, node):
+        # You could access `x` and `y` in forward with
+        # self.inbound_nodes[0] (`x`) and self.inbound_nodes[1] (`y`)
+        Node.__init__(self, [node])
+
+    def forward(self):
+        """
+        Set the value of this node (`self.value`) to the sum of it's inbound_nodes.
+
+        Your code here!
+        """
+
+        # Modify to add n number of inputs
+        X = self.inbound_nodes[0].value
+
+        # Compute dot product
+        self.value = 1 / (1+np.exp(-X))
 
 def topological_sort(feed_dict):
     """
