@@ -2,15 +2,17 @@
 You need to change the Add() class below.
 """
 
+import numpy as np
+
 class Node(object):
-    def __init__(self, inbound_nodes=[], op=None):
+    def __init__(self, inbound_nodes=[]):
         # Nodes from which this Node receives values
         self.inbound_nodes = inbound_nodes
         # Nodes to which this Node passes values
         self.outbound_nodes = []
 
         # Type of operation , e.g., +,-,*, /
-        self.operation = op
+        #self.operation = op
 
         # A calculated value
         self.value = None
@@ -52,19 +54,20 @@ class Add(Node):
     def __init__(self, *args):
         # You could access `x` and `y` in forward with
         # self.inbound_nodes[0] (`x`) and self.inbound_nodes[1] (`y`)
-        Node.__init__(self, *args, op="+")
+        #Node.__init__(self, *args, op="+")
+        Node.__init__(self, *args)
 
     def forward(self):
         """
         Set the value of this node (`self.value`) to the sum of it's inbound_nodes.
-
         Your code here!
         """
 
         # Modify to add n number of inputs
         total = 0
         for inp in self.inbound_nodes:
-            total += inp.value
+            total += np.array(inp.value)
+            # += inp.value
 
         #self.value = self.inbound_nodes[0].value + self.inbound_nodes[1].value
         self.value = total
@@ -73,7 +76,8 @@ class Mult(Node):
     def __init__(self, *args):
         # You could access `x` and `y` in forward with
         # self.inbound_nodes[0] (`x`) and self.inbound_nodes[1] (`y`)
-        Node.__init__(self, *args, op="*")
+        #Node.__init__(self, *args, op="*")
+        Node.__init__(self, *args)
 
     def forward(self):
         """
@@ -94,7 +98,7 @@ class Linear(Node):
     def __init__(self, *args):
         # You could access `x` and `y` in forward with
         # self.inbound_nodes[0] (`x`) and self.inbound_nodes[1] (`y`)
-        Node.__init__(self, *args, op="")
+        Node.__init__(self, *args)
 
     def forward(self):
         """
@@ -106,23 +110,11 @@ class Linear(Node):
         # Modify to add n number of inputs
         inps = self.inbound_nodes[0]
         weights = self.inbound_nodes[1]
+        base = self.inbound_nodes[2]
 
-        total = 0
-        for inp in inps.value:
-            for weight in weights.value:
-                total += inp * weight
+        # Compute dot product
+        self.value = np.dot(inps.value,weights.value) + base.value
 
-        print (total)
-
-
-        #for weight in weights.value:
-        #    print(weight)
-        # SUM (Inps * Weights)
-        #for inp in self.inbound_nodes:
-        #    total *= inp.value
-
-        #self.value = self.inbound_nodes[0].value + self.inbound_nodes[1].value
-        self.value = None
 """
 No need to change anything below here!
 """
