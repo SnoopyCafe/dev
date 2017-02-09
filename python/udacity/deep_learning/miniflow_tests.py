@@ -1,7 +1,6 @@
 import unittest
 import unittest.mock
 import os
-import math
 from miniflow import *
 
 
@@ -63,6 +62,17 @@ class BasicTest(unittest.TestCase):
 
         answer = np.array(compute(g, feed_dict)).all()
         self.assertEqual(True, answer)
+
+    def test_cost(self):
+        y, a = Input(), Input()
+        cost = MSE(y, a)
+
+        y_ = np.array([1, 2, 3])
+        a_ = np.array([4.5, 5, 10])
+
+        feed_dict = {y: y_, a: a_}
+        self.assertAlmostEqual(compute(cost, feed_dict), 23.4166, 3)
+
 
 def compute(node, feed):
         # NOTE: because topological_sort set the values for the `Input` nodes we could also access
