@@ -13,8 +13,8 @@ def mnist_features_labels(n_labels):
     mnist_features = []
     mnist_labels = []
 
-    mnist = input_data.read_data_sets('/datasets/ud730/mnist', one_hot=True)
-
+    #mnist = input_data.read_data_sets('/datasets/ud730/mnist', one_hot=True)
+    mnist = input_data.read_data_sets('ud730/mnist', one_hot=True)
     # In order to make quizzes run faster, we're only looking at 10000 images
     for mnist_feature, mnist_label in zip(*mnist.train.next_batch(10000)):
 
@@ -47,9 +47,7 @@ train_features, train_labels = mnist_features_labels(n_labels)
 
 with tf.Session() as session:
     # TODO: Initialize session variables
-    init = tf.global_variables_initializer()
-    with tf.Session() as sess:
-        sess.run(init)
+    session.run(tf.global_variables_initializer())
 
     # Softmax
     prediction = tf.nn.softmax(logits)

@@ -9,10 +9,7 @@ def get_weights(n_features, n_labels):
     :return: TensorFlow weights
     """
     # TODO: Return weights
-
-    weights = tf.Variable(tf.truncated_normal((n_features, n_labels)))
-
-    return weights
+    return tf.Variable(tf.truncated_normal((n_features, n_labels)))
 
 
 def get_biases(n_labels):
@@ -22,8 +19,7 @@ def get_biases(n_labels):
     :return: TensorFlow bias
     """
     # TODO: Return biases
-    biases = tf.Variable(tf.zeros(n_labels))
-    return biases
+    return tf.Variable(tf.zeros(n_labels))
 
 
 def linear(input, w, b):
